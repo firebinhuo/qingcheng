@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>order管理</title>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <!-- 引入样式 -->
+    <link href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" rel="stylesheet">
+    <link href="../plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style rel="stylesheet">
+        .text {
+            font-size: 14px;
+        }
+
+        .item {
+            margin-bottom: 18px;
+        }
+
+        .clearfix:before,
+        .clearfix:after {
+            display: table;
+            content: "";
+        }
+
+        .clearfix:after {
+            clear: both
+        }
+
+        .box-card {
+            width: 480px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header>
+            <div class="content-header" style="height: 20%">
+                <h1>管理<small>order管理</small></h1>
+                <el-steps :active="orderStatus" finish-status="success" style="width: 80%;margin: 0 auto;">
+                    <el-step title="提交订单"></el-step>
+                    <el-step title="支付订单"></el-step>
+                    <el-step title="平台发货"></el-step>
+                    <el-step title="确认收货"></el-step>
+                    <el-step title="完成评价"></el-step>
+                </el-steps>
+            </div>
+
+        </el-header>
+
+        <el-main>
+            <div class="app-container" style="width: 80%;margin: 20px auto">
+                <div class="info">
+                    <el-card class="box-card" style="width: 100%">
+                        <div class="clearfix" slot="header">
+                            <span>
+                                   <i class="el-icon-collection-tag" style="background-color: #5e5e5e"></i>
+                                基本信息
+                            </span>
+                            <!--                  -->
+                        </div>
+                        <div class="table">
+                            <el-table
+                                    :data="order"
+                                    border
+                                    style="width: 100%">
+                                <el-table-column label="交易日期"
+                                                 prop="transactionId"
+                                                 width="180">
+                                </el-table-column>
+                                <el-table-column
+                                        label="订单编号"
+                                        prop="orderId"
+                                        width="180">
+                                </el-table-column>
+                                <el-table-column
+                                        label="用户账号"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="支付类型"
+                                        prop="payType">
+                                </el-table-column>
+                                <el-table-column
+                                        label="订单来源"
+                                        prop="sourceType">
+                                </el-table-column>
+                                <el-table-column
+                                        label="物流单号"
+                                        prop="shippingName">
+                                </el-table-column>
+                                <el-table-column
+                                        label="订单状态"
+                                        prop="orderStatus">
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                    </el-card>
+                    <el-card class="box-card" style="width: 100%">
+                        <div class="clearfix" slot="header">
+                            <i class="el-icon-collection-tag"></i>
+                            <span>收货人信息</span>
+                        </div>
+                        <div class="table">
+                            <el-table
+                                    :data="order"
+                                    border
+                                    fit="fit"
+                                    style="width: 100%">
+                                <el-table-column label="收货人"
+                                                 prop="receiverContact"
+                                                 style="width: 25%">
+                                </el-table-column>
+                                <el-table-column
+                                        label="收货人手机号"
+                                        prop="receiverMobile"
+                                        style="width: 25%">
+                                </el-table-column>
+                                <el-table-column
+                                        label="收货人地址"
+                                        prop="receiverAddress"
+                                        style="width: 25%">
+                                </el-table-column>
+                                <el-table-column
+                                        label="邮政编码"
+                                        prop="username"
+                                        style="width: 25%">
+                                </el-table-column>
+
+                            </el-table>
+                        </div>
+                    </el-card>
+
+                    <el-card class="box-card" style="width: 100%">
+                        <div class="clearfix" slot="header">
+                            <span>
+                                <i class="el-icon-collection-tag"></i>
+                                商品信息
+                            </span>
+                        </div>
+                        <div class="table">
+                            <el-table
+                                    :data="orderItem"
+                                    border
+                                    style="width: 100%">
+                                <el-table-column
+                                        label="商品图片"
+                                        width="180">
+                                    <template slot-scope="scope">
+                                        <img :src="scope.row.image" height="120px" width="100%">
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="价格\n货号"
+                                                 prop="price"
+                                                 width="180">
+                                </el-table-column>
+                                <!--                                根据sku查找尺寸与颜色-->
+                                <el-table-column
+                                        label="属性"
+                                        prop="orderId"
+                                        width="180">
+                                </el-table-column>
+                                <el-table-column
+                                        label="数量"
+                                        prop="num">
+                                </el-table-column>
+                                <el-table-column
+                                        label="库存"
+                                        prop="num">
+                                </el-table-column>
+                                <el-table-column
+                                        label="小计"
+                                        prop="payMoney">
+                                </el-table-column>
+
+                            </el-table>
+                        </div>
+                    </el-card>
+
+                    <el-card class="box-card" style="width: 100%">
+                        <div class="clearfix" slot="header">
+                            <i class="el-icon-collection-tag"></i>
+                            <span>费用信息</span>
+                        </div>
+                        <div class="table">
+                            <el-table
+                                    :data="order"
+                                    border
+                                    style="width: 100%">
+                                <el-table-column label="商品合计"
+                                                 prop="transactionId"
+                                                 width="180">
+                                </el-table-column>
+                                <el-table-column
+                                        label="运费"
+                                        prop="orderId"
+                                        width="180">
+                                </el-table-column>
+                                <el-table-column
+                                        label="优惠券"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="活动优惠"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="订单总金额"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="应付总金额"
+                                        prop="username">
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                    </el-card>
+                    <el-card class="box-card" style="width: 100%">
+                        <div class="clearfix" slot="header">
+                            <i class="el-icon-collection-tag"></i>
+                            <span>操作信息</span>
+                        </div>
+                        <div class="table">
+                            <el-table
+                                    :data="order"
+                                    border
+                                    style="width: 100%">
+                                <el-table-column label="操作者"
+                                                 prop="transactionId"
+                                                 width="180">
+                                </el-table-column>
+                                <el-table-column
+                                        label="操作时间"
+                                        prop="orderId"
+                                        width="180">
+                                </el-table-column>
+                                <el-table-column
+                                        label="订单状态"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="应付状态"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="发货状态"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="用户账号"
+                                        prop="username">
+                                </el-table-column>
+                                <el-table-column
+                                        label="备注"
+                                        prop="username">
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                    </el-card>
+                </div>
+            </div>
+
+        </el-main>
+    </el-container>
+</div>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script src="/js/util.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                order: [],
+                orderItem: [],
+                orderStatus: 0,
+                formVisible: false
+
+            }
+        },
+        created() {
+            this.fetchData();
+        },
+        methods: {
+
+            fetchData() {
+                let templateId = getQueryString("id")
+                console.log(templateId)
+                axios.get(`/order/orderFull.do?id=${templateId}`).then(response => {
+                    // this.tableData = response.data
+                    console.log(response.data)
+                    this.order.push(response.data.order)
+                    this.orderItem.push(response.data.orderItem)
+                    this.orderStatus = Number(response.data.order.orderStatus)
+                    console.log(this.order)
+                });
+            }
+
+        }
+    })
+</script>
+</body>
+</html>

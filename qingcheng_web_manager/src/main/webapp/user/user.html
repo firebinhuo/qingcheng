@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>user管理</title>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <!-- 引入样式 -->
+    <link href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" rel="stylesheet">
+    <link href="../plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理<small>user管理</small></h1>
+        <el-breadcrumb class="breadcrumb" separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>user管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <!--查询表单-->
+                <el-form :inline="true">
+                    <el-form-item label="密码，加密存储">
+                        <el-input class="filter-item" placeholder="密码，加密存储" v-model="searchMap.password"></el-input>
+                    </el-form-item>
+                    <el-form-item label="注册手机号">
+                        <el-input class="filter-item" placeholder="注册手机号" v-model="searchMap.phone"></el-input>
+                    </el-form-item>
+                    <el-form-item label="注册邮箱">
+                        <el-input class="filter-item" placeholder="注册邮箱" v-model="searchMap.email"></el-input>
+                    </el-form-item>
+                    <el-form-item label="创建时间">
+                        <el-input class="filter-item" placeholder="创建时间" v-model="searchMap.created"></el-input>
+                    </el-form-item>
+                    <el-form-item label="修改时间">
+                        <el-input class="filter-item" placeholder="修改时间" v-model="searchMap.updated"></el-input>
+                    </el-form-item>
+                    <el-form-item label="会员来源：1:PC，2：H5，3：Android，4：IOS">
+                        <el-input class="filter-item" placeholder="会员来源：1:PC，2：H5，3：Android，4：IOS"
+                                  v-model="searchMap.sourceType"></el-input>
+                    </el-form-item>
+                    <el-form-item label="昵称">
+                        <el-input class="filter-item" placeholder="昵称" v-model="searchMap.nickName"></el-input>
+                    </el-form-item>
+                    <el-form-item label="真实姓名">
+                        <el-input class="filter-item" placeholder="真实姓名" v-model="searchMap.name"></el-input>
+                    </el-form-item>
+                    <el-form-item label="使用状态（1正常 0非正常）">
+                        <el-input class="filter-item" placeholder="使用状态（1正常 0非正常）"
+                                  v-model="searchMap.status"></el-input>
+                    </el-form-item>
+                    <el-form-item label="头像地址">
+                        <el-input class="filter-item" placeholder="头像地址" v-model="searchMap.headPic"></el-input>
+                    </el-form-item>
+                    <el-form-item label="QQ号码">
+                        <el-input class="filter-item" placeholder="QQ号码" v-model="searchMap.qq"></el-input>
+                    </el-form-item>
+                    <el-form-item label="手机是否验证 （0否  1是）">
+                        <el-input class="filter-item" placeholder="手机是否验证 （0否  1是）"
+                                  v-model="searchMap.isMobileCheck"></el-input>
+                    </el-form-item>
+                    <el-form-item label="邮箱是否检测（0否  1是）">
+                        <el-input class="filter-item" placeholder="邮箱是否检测（0否  1是）"
+                                  v-model="searchMap.isEmailCheck"></el-input>
+                    </el-form-item>
+                    <el-form-item label="性别，1男，0女">
+                        <el-input class="filter-item" placeholder="性别，1男，0女" v-model="searchMap.sex"></el-input>
+                    </el-form-item>
+                    <el-form-item label="会员等级">
+                        <el-input class="filter-item" placeholder="会员等级" v-model="searchMap.userLevel"></el-input>
+                    </el-form-item>
+                    <el-form-item label="积分">
+                        <el-input class="filter-item" placeholder="积分" v-model="searchMap.points"></el-input>
+                    </el-form-item>
+                    <el-form-item label="经验值">
+                        <el-input class="filter-item" placeholder="经验值" v-model="searchMap.experienceValue"></el-input>
+                    </el-form-item>
+                    <el-form-item label="出生年月日">
+                        <el-input class="filter-item" placeholder="出生年月日" v-model="searchMap.birthday"></el-input>
+                    </el-form-item>
+                    <el-form-item label="最后登录时间">
+                        <el-input class="filter-item" placeholder="最后登录时间" v-model="searchMap.lastLoginTime"></el-input>
+                    </el-form-item>
+
+                    <el-button @click="fetchData()" class="dalfBut">查询</el-button>
+                    <el-button @click="formVisible=true;pojo={}" class="butT" type="primary">新增</el-button>
+                </el-form>
+            </div>
+
+            <el-table :data="tableData" border style="width: 100%">
+                <el-table-column label="用户名" prop="username" width="80"></el-table-column>
+                <el-table-column label="密码，加密存储" prop="password" width="80"></el-table-column>
+                <el-table-column label="注册手机号" prop="phone" width="80"></el-table-column>
+                <el-table-column label="注册邮箱" prop="email" width="80"></el-table-column>
+                <el-table-column label="创建时间" prop="created" width="80"></el-table-column>
+                <el-table-column label="修改时间" prop="updated" width="80"></el-table-column>
+                <el-table-column label="会员来源：1:PC，2：H5，3：Android，4：IOS" prop="sourceType" width="80"></el-table-column>
+                <el-table-column label="昵称" prop="nickName" width="80"></el-table-column>
+                <el-table-column label="真实姓名" prop="name" width="80"></el-table-column>
+                <el-table-column label="使用状态（1正常 0非正常）" prop="status" width="80"></el-table-column>
+                <el-table-column label="头像地址" prop="headPic" width="80"></el-table-column>
+                <el-table-column label="QQ号码" prop="qq" width="80"></el-table-column>
+                <el-table-column label="手机是否验证 （0否  1是）" prop="isMobileCheck" width="80"></el-table-column>
+                <el-table-column label="邮箱是否检测（0否  1是）" prop="isEmailCheck" width="80"></el-table-column>
+                <el-table-column label="性别，1男，0女" prop="sex" width="80"></el-table-column>
+                <el-table-column label="会员等级" prop="userLevel" width="80"></el-table-column>
+                <el-table-column label="积分" prop="points" width="80"></el-table-column>
+                <el-table-column label="经验值" prop="experienceValue" width="80"></el-table-column>
+                <el-table-column label="出生年月日" prop="birthday" width="80"></el-table-column>
+                <el-table-column label="最后登录时间" prop="lastLoginTime" width="80"></el-table-column>
+
+                <el-table-column
+                        label="操作">
+                    <template slot-scope="scope">
+                        <el-button @click="edit(scope.row.username)" size="mini" size="small" type="primary">修改
+                        </el-button>
+                        <el-button @click="dele(scope.row.username)" size="mini" size="small" type="danger">删除
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        :current-page.sync="currentPage"
+                        :page-size="size"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :total="total"
+                        @current-change="fetchData"
+                        @size-change="fetchData"
+                        class="pagiantion"
+                        layout="total, sizes, prev, pager, next, jumper">
+                </el-pagination>
+            </div>
+            <div class="add-form">
+                <!--弹出窗口-->
+                <el-dialog :visible.sync="formVisible" title="编辑">
+                    <el-form label-width="80px">
+                        <el-form-item label="密码，加密存储">
+                            <el-input v-model="pojo.password"></el-input>
+                        </el-form-item>
+                        <el-form-item label="注册手机号">
+                            <el-input v-model="pojo.phone"></el-input>
+                        </el-form-item>
+                        <el-form-item label="注册邮箱">
+                            <el-input v-model="pojo.email"></el-input>
+                        </el-form-item>
+                        <el-form-item label="创建时间">
+                            <el-input v-model="pojo.created"></el-input>
+                        </el-form-item>
+                        <el-form-item label="修改时间">
+                            <el-input v-model="pojo.updated"></el-input>
+                        </el-form-item>
+                        <el-form-item label="会员来源：1:PC，2：H5，3：Android，4：IOS">
+                            <el-input v-model="pojo.sourceType"></el-input>
+                        </el-form-item>
+                        <el-form-item label="昵称">
+                            <el-input v-model="pojo.nickName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="真实姓名">
+                            <el-input v-model="pojo.name"></el-input>
+                        </el-form-item>
+                        <el-form-item label="使用状态（1正常 0非正常）">
+                            <el-input v-model="pojo.status"></el-input>
+                        </el-form-item>
+                        <el-form-item label="头像地址">
+                            <el-input v-model="pojo.headPic"></el-input>
+                        </el-form-item>
+                        <el-form-item label="QQ号码">
+                            <el-input v-model="pojo.qq"></el-input>
+                        </el-form-item>
+                        <el-form-item label="手机是否验证 （0否  1是）">
+                            <el-input v-model="pojo.isMobileCheck"></el-input>
+                        </el-form-item>
+                        <el-form-item label="邮箱是否检测（0否  1是）">
+                            <el-input v-model="pojo.isEmailCheck"></el-input>
+                        </el-form-item>
+                        <el-form-item label="性别，1男，0女">
+                            <el-input v-model="pojo.sex"></el-input>
+                        </el-form-item>
+                        <el-form-item label="会员等级">
+                            <el-input v-model="pojo.userLevel"></el-input>
+                        </el-form-item>
+                        <el-form-item label="积分">
+                            <el-input v-model="pojo.points"></el-input>
+                        </el-form-item>
+                        <el-form-item label="经验值">
+                            <el-input v-model="pojo.experienceValue"></el-input>
+                        </el-form-item>
+                        <el-form-item label="出生年月日">
+                            <el-input v-model="pojo.birthday"></el-input>
+                        </el-form-item>
+                        <el-form-item label="最后登录时间">
+                            <el-input v-model="pojo.lastLoginTime"></el-input>
+                        </el-form-item>
+
+                        <!-- 图片上传代码 如页面有图片上传功能放开注释 ****
+                        <el-form-item label="图片">
+                            <el-upload
+                                    class="avatar-uploader"
+                                    action="/upload/native.do"
+                                    :show-file-list="false"
+                                    :on-success="handleAvatarSuccess"
+                                    :before-upload="beforeAvatarUpload">
+                                <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                            </el-upload>
+                        </el-form-item>
+                        -->
+
+                        <el-form-item>
+                            <el-button @click="save()" type="primary">保存</el-button>
+                            <el-button @click="formVisible = false">关闭</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-dialog>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableData: [],
+                currentPage: 1,
+                total: 10,
+                size: 10,
+                searchMap: {},
+                pojo: {},
+                formVisible: false,
+                imageUrl: ''
+            }
+        },
+        created() {
+            this.fetchData();
+        },
+        methods: {
+            fetchData() {
+                axios.post(`/user/findPage.do?page=${this.currentPage}&size=${this.size}`, this.searchMap).then(response => {
+                    this.tableData = response.data.rows;
+                    this.total = response.data.total;
+                });
+            },
+            save() {
+                // this.pojo.image= this.imageUrl; //如页面有图片上传功能放开注释
+                axios.post(`/user/${this.pojo.username == null ? 'add' : 'update'}.do`, this.pojo).then(response => {
+                    this.fetchData(); //刷新列表
+                    this.formVisible = false;//关闭窗口
+                });
+            },
+            edit(username) {
+                this.formVisible = true // 打开窗口
+                // 调用查询
+                axios.get(`/user/findById.do?username=${username}`).then(response => {
+                    this.pojo = response.data;
+                    // this.imageUrl=this.pojo.image //显示图片  如页面有图片上传功能放开注释
+                })
+            },
+            dele(username) {
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.get(`/user/delete.do?username=${username}`).then(response => {
+                        this.fetchData(); //刷新列表
+                    })
+                })
+            },
+            /* ****图片上传相关代码  如页面有图片上传功能放开注释 ****
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = file.response;
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            }*/
+        }
+    })
+</script>
+</html>
