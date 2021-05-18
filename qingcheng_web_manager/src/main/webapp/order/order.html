@@ -267,28 +267,49 @@
                         <!--                        </div>-->
                     </el-row>
                 </div>
-                <el-table :data="tableData" border
-                          style="width: 100%">
-                    </el-table-column>
-                    <el-table-column label="订单编号" prop="id" width="180"></el-table-column>
-                    <el-table-column label="收货人" prop="receiverContact" width="180"></el-table-column>
-                    <el-table-column label="手机号码" prop="receiverMobile" width="180">
+                <el-form>
+                    <el-table :data="tableData" border
+                              style="width: 100%">
+                        <el-form-item label="分类名称">
+                            <el-table-column label="订单编号" prop="id" width="180"></el-table-column>
+                        </el-form-item>
+                        <!--                        <el-table-column label="订单编号" prop="id" v-model="pojo.id" width="180"></el-table-column>-->
+                        <el-table-column label="收货人" prop="receiverContact"
+                                         width="180"></el-table-column>
+                        <el-table-column label="手机号码" prop="receiverMobile" width="180">
 
-                    </el-table-column>
-                    <el-table-column label="收货地址" prop="receiverAddress" width="160"></el-table-column>
-                    <el-table-column label="配送方式" style="display: block" width="180">
-                        <template slot-scope="scope">
-                            <el-select @change="entranceChange(scope.row, scope.$index)" placeholder="请选择配送方式"
-                                       size="small" style="width:180px" v-model="scope.row.displayPosition">
-                                <el-option :key="item.value" :label="item.label" :value="item.value"
-                                           v-for="item in options"></el-option>
-                            </el-select>
-                        </template>
-                    </el-table-column>
+                        </el-table-column>
+                        <el-table-column label="收货地址" prop="receiverAddress"
+                                         width="160"></el-table-column>
+                        <el-table-column label="配送方式" style="display: block" width="180">
+                            <template slot-scope="scope">
+                                <el-select placeholder="请选择配送方式"
+                                           size="small" style="width:180px"
+                                           v-model="tableData[scope.$index]['shippingName']">
+                                    <el-option
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value"
+                                            v-for="item in options">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                        </el-table-column>
 
-                    <el-table-column label="物流单号" prop="orderStatus" width="180"></el-table-column>
+                        <el-table-column label="物流单号" width="180">
+                            <template slot-scope="scope">
+                                <el-input @change="selfAdd(scope)"
+                                          v-model="tableData[scope.$index]['shippingCode']"></el-input>
+                            </template>
+                        </el-table-column>
 
-                </el-table>
+                    </el-table>
+                    <el-form-item>
+                        <el-button @click="this.status = 0">取消</el-button>
+                        <el-button @click="batchSend()" type="success">提交</el-button>
+                    </el-form-item>
+                </el-form>
+
 
             </div>
         </div>
@@ -315,23 +336,25 @@
                 imageUrl: '',
                 ids: [],
                 status: 0,
-                options: [{
-                    value: '选项1',
-                    label: '京东物流'
-                }, {
-                    value: '选项2',
-                    label: '顺丰物流'
-                }, {
-                    value: '选项3',
-                    label: '圆通物流'
-                }, {
-                    value: '选项4',
-                    label: '申通物流'
-                }, {
-                    value: '选项5',
-                    label: '韵达快递'
-                }],
-                value: ''
+                options: [
+                    {
+                        value: 'o1',
+                        label: '京东物流'
+                    }, {
+                        value: 'o2',
+                        label: '顺丰物流'
+                    }, {
+                        value: 'o3',
+                        label: '圆通物流'
+                    }, {
+                        value: 'o4',
+                        label: '申通物流'
+                    }, {
+                        value: 'o5',
+                        label: '韵达快递'
+                    }],
+                value: '',
+                shippingCode: []
             }
         },
         created() {
@@ -411,12 +434,22 @@
                 })
             },
             //批量发货
-            // bachSend(){
-            //
-            //     axios.post("/order/batchSend.do",this.searchMap).then(res=>{
-            //         let data = res.data;
-            //     })
-            // }
+            batchSend() {
+                axios.post("/order/batchSend.do", this.tableData).then(res => {
+                    this.status = 0
+                    this.searchMap = {}
+                    this.fetchData();
+                })
+            },
+            selfAdd(scope) {
+
+                for (let index = 0; index < this.tableData.length - 1; index++) {
+                    this.tableData[index + 1].shippingCode = (Number(this.tableData[index]['shippingCode']) + 1)
+                }
+                console.log(scope)
+                console.log(this.tableData)
+
+            }
 
         }
     })

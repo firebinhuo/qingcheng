@@ -70,6 +70,7 @@ public class OrderController {
 
     @PostMapping("/batchSend")
     public Result batchSend(@RequestBody List<Order> orders) {
+        System.out.println(orders);
         orderService.batchSend(orders);
         return new Result();
 

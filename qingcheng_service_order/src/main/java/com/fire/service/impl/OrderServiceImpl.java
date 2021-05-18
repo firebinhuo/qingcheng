@@ -4,8 +4,11 @@ import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fire.dao.OrderItemMapper;
+import com.fire.dao.OrderLogMapper;
 import com.fire.pojo.order.OrderFull;
 import com.fire.pojo.order.OrderItem;
+import com.fire.pojo.order.OrderLog;
+import com.fire.utils.IdWorker;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.OrderMapper;
@@ -13,6 +16,7 @@ import com.fire.entity.PageResult;
 import com.fire.pojo.order.Order;
 import com.fire.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.lang.reflect.Type;
@@ -136,6 +140,10 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    @Autowired
+    private OrderLogMapper logMapper;
+
+    @Transactional
     @Override
     public void batchSend(List<Order> orders) {
         //判断运单号和物流公司是否为空
@@ -145,11 +153,26 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("请选择快递公司和填写快递单号");
             }
         }
+        OrderLog orderLog = new OrderLog();
         for (Order order : orders) {
-            order.setOrderStatus("3");//订单状态，已发货
-            order.setConsignStatus("2");//发货状态，已发货
+            order.setOrderStatus("2");//订单状态，已发货
+            order.setConsignStatus("1");//发货状态，已发货
             order.setConsignTime(new Date());//发货时间
             orderMapper.updateByPrimaryKeySelective(order);
+
+            // TODO: 2021/5/18 添加订单日志
+            long l = new IdWorker().nextId();
+            orderLog.setId(l + "");
+            orderLog.setOrderId(order.getId());
+            orderLog.setOrderStatus(order.getOrderStatus());
+            orderLog.setConsignStatus(order.getConsignStatus());
+            orderLog.setOperater("admin");
+            orderLog.setOperateTime(new Date());
+            orderLog.setPayStatus(order.getPayStatus());
+            orderLog.setRemarks("合作愉快");
+
+            logMapper.insert(orderLog);
+
         }
     }
 
