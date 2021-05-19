@@ -1,6 +1,12 @@
 package com.fire.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.fire.dao.OrderItemMapper;
+import com.fire.dao.OrderMapper;
+import com.fire.dao.ReturnOrderItemMapper;
+import com.fire.pojo.order.Order;
+import com.fire.pojo.order.OrderItem;
+import com.fire.pojo.order.ReturnOrderItem;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.ReturnOrderMapper;
@@ -10,10 +16,11 @@ import com.fire.service.order.ReturnOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = ReturnOrderService.class)
 public class ReturnOrderServiceImpl implements ReturnOrderService {
 
     @Autowired
@@ -102,6 +109,76 @@ public class ReturnOrderServiceImpl implements ReturnOrderService {
      */
     public void delete(Long id) {
         returnOrderMapper.deleteByPrimaryKey(id);
+    }
+
+    /**
+     * 拒绝退款实现类
+     */
+    @Autowired
+    private ReturnOrderItemMapper returnOrderItemMapper;//退款订单明细
+    @Autowired
+    private OrderItemMapper orderItemMapper;//具体订单明细
+
+    /**
+     * 同意退款实现类
+     */
+
+    @Override
+    public void agreeRefund(String id, Integer money, Integer adminId) {
+        ReturnOrder returnOrder = returnOrderMapper.selectByPrimaryKey(id);//
+        if (returnOrder == null) {
+            throw new RuntimeException("退款订单不存在");
+        }
+        if (!returnOrder.getType().equals("2")) {
+            throw new RuntimeException("不是退款订单！");
+        }
+        if (money > returnOrder.getReturnMoney() || money <= 0) {
+            throw new RuntimeException("退款金额不合法！");
+        }
+
+        returnOrder.setReturnMoney(money);
+        returnOrder.setAdminId(adminId);//管理员
+        returnOrder.setStatus("1");//同意
+        returnOrder.setDisposeTime(new Date());//处理日期
+        returnOrderMapper.updateByPrimaryKeySelective(returnOrder);//保存修改
+
+        // TODO: 2021/5/19 调用平台的退款接口
+
+
+    }
+
+    @Override
+    public void refuseRefund(String id, String remark, Integer adminId) {
+        ReturnOrder returnOrder = returnOrderMapper.selectByPrimaryKey(id);
+        if (returnOrder == null) {
+            throw new RuntimeException("退款订单不存在！");
+        }
+        if (!returnOrder.getType().equals("2")) {
+            throw new RuntimeException("不是退款订单！");
+        }
+        if (remark.length() < 5) {
+            throw new RuntimeException("请输入驳回理由！");
+        }
+        //修改属性
+        returnOrder.setRemark(remark);//驳回理由
+        returnOrder.setStatus("2");//驳回
+        returnOrder.setAdminId(adminId);//管理员ID
+        returnOrder.setDisposeTime(new Date());//驳回日期
+
+        returnOrderMapper.updateByPrimaryKeySelective(returnOrder);//保存
+
+        //修改对应订单明细表的退款状态为未申请
+        Example example = new Example(ReturnOrderItem.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("returnOrderId", id);//退费订单ID
+        List<ReturnOrderItem> returnOrderItemList = returnOrderItemMapper.selectByExample(example);
+
+        for (ReturnOrderItem returnOrderItem : returnOrderItemList) {
+            OrderItem orderitem = new OrderItem();
+            orderitem.setId(returnOrderItem.getOrderItemId() + "");//提取订单明细ID
+            orderitem.setIsReturn("0");
+            orderItemMapper.updateByPrimaryKeySelective(orderitem);//更新状态，可以重新发送退款申请
+        }
     }
 
     /**
