@@ -435,7 +435,7 @@
             },
             //批量发货
             batchSend() {
-                axios.post("/order/batchSend.do", this.tableData).then(res => {
+                axios.post("/order/batchSend.do", this.tableData).then(() => {
                     this.status = 0
                     this.searchMap = {}
                     this.fetchData();

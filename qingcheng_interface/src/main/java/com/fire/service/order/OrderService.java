@@ -12,34 +12,39 @@ import java.util.*;
 public interface OrderService {
 
 
-    public List<Order> findAll();
+    List<Order> findAll();
 
 
-    public PageResult<Order> findPage(int page, int size);
+    PageResult<Order> findPage(int page, int size);
 
 
-    public List<Order> findList(Map<String, Object> searchMap);
+    List<Order> findList(Map<String, Object> searchMap);
 
 
-    public PageResult<Order> findPage(Map<String, Object> searchMap, int page, int size);
+    PageResult<Order> findPage(Map<String, Object> searchMap, int page, int size);
 
 
-    public Order findById(String id);
+    Order findById(String id);
 
-    public void add(Order order);
-
-
-    public void update(Order order);
+    void add(Order order);
 
 
-    public void delete(String id);
+    void update(Order order);
 
-    public OrderFull findOrderFullById(String id);
+
+    void delete(String id);
+
+    OrderFull findOrderFullById(String id);
 
     /**
      * 批量发货
      *
-     * @param orders
+     * @param orders 订单列表
      */
-    public void batchSend(List<Order> orders);
+    void batchSend(List<Order> orders);
+
+    /**
+     * 超时订单处理逻辑
+     */
+    void orderTimeLogic();
 }

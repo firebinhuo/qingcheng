@@ -3,23 +3,22 @@ package com.fire.service.impl;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.fire.dao.OrderConfigMapper;
 import com.fire.dao.OrderItemMapper;
 import com.fire.dao.OrderLogMapper;
-import com.fire.pojo.order.OrderFull;
-import com.fire.pojo.order.OrderItem;
-import com.fire.pojo.order.OrderLog;
+import com.fire.pojo.order.*;
 import com.fire.utils.IdWorker;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.OrderMapper;
 import com.fire.entity.PageResult;
-import com.fire.pojo.order.Order;
 import com.fire.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
-import java.lang.reflect.Type;
+
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -32,17 +31,21 @@ public class OrderServiceImpl implements OrderService {
     private OrderMapper orderMapper;
     /**
      * 组合Order和OrderItem
-     *
-     * @param id
-     * @return
      */
     @Autowired
     private OrderItemMapper orderItemMapper;
 
     /**
+     * 超时订单处理实现类
+     * 注入订单日志mapper
+     */
+    @Autowired
+    private OrderConfigMapper orderConfigMapper;
+
+    /**
      * 返回全部记录
      *
-     * @return
+     * @return order集合
      */
     public List<Order> findAll() {
         return orderMapper.selectAll();
@@ -58,14 +61,14 @@ public class OrderServiceImpl implements OrderService {
     public PageResult<Order> findPage(int page, int size) {
         PageHelper.startPage(page, size);
         Page<Order> orders = (Page<Order>) orderMapper.selectAll();
-        return new PageResult<Order>(orders.getTotal(), orders.getResult());
+        return new PageResult<>(orders.getTotal(), orders.getResult());
     }
 
     /**
      * 条件查询
      *
      * @param searchMap 查询条件
-     * @return
+     * @return List<Order>
      */
     public List<Order> findList(Map<String, Object> searchMap) {
         Example example = createExample(searchMap);
@@ -75,23 +78,23 @@ public class OrderServiceImpl implements OrderService {
     /**
      * 分页+条件查询
      *
-     * @param searchMap
-     * @param page
-     * @param size
-     * @return
+     * @param searchMap 拆寻条件map
+     * @param page      第几页
+     * @param size      页大小
+     * @return order集合
      */
     public PageResult<Order> findPage(Map<String, Object> searchMap, int page, int size) {
         PageHelper.startPage(page, size);
         Example example = createExample(searchMap);
         Page<Order> orders = (Page<Order>) orderMapper.selectByExample(example);
-        return new PageResult<Order>(orders.getTotal(), orders.getResult());
+        return new PageResult<>(orders.getTotal(), orders.getResult());
     }
 
     /**
      * 根据Id查询
      *
-     * @param id
-     * @return
+     * @param id id
+     * @return order
      */
     public Order findById(String id) {
         return orderMapper.selectByPrimaryKey(id);
@@ -100,7 +103,7 @@ public class OrderServiceImpl implements OrderService {
     /**
      * 新增
      *
-     * @param order
+     * @param order 订单
      */
     public void add(Order order) {
         orderMapper.insert(order);
@@ -109,19 +112,10 @@ public class OrderServiceImpl implements OrderService {
     /**
      * 修改
      *
-     * @param order
+     * @param order 订单
      */
     public void update(Order order) {
         orderMapper.updateByPrimaryKeySelective(order);
-    }
-
-    /**
-     * 删除
-     *
-     * @param id
-     */
-    public void delete(String id) {
-        orderMapper.deleteByPrimaryKey(id);
     }
 
     @Override
@@ -177,10 +171,54 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 删除
+     *
+     * @param id id
+     */
+    public void delete(String id) {
+        orderMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public void orderTimeLogic() {
+        OrderConfig orderConfig = orderConfigMapper.selectByPrimaryKey(1);
+        Integer orderTimeout = orderConfig.getOrderTimeout();//超时时间
+        LocalDateTime localDateTime = LocalDateTime.now().minusMinutes(orderTimeout);//得到超时的超时时间点
+//        设置查询条件
+        Example example = new Example(Order.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andLessThan("createTime", localDateTime);//创建时间小于超时时间
+        criteria.andEqualTo("orderStatus", "0");//未付款的
+        criteria.andEqualTo("isDelete", "0");//未删除的
+
+//        查询超时订单
+        List<Order> orders = orderMapper.selectByExample(example);
+        for (Order order : orders) {
+            //记录订单变动日志
+            OrderLog orderLog = new OrderLog();
+            orderLog.setId(new IdWorker().nextId() + "");
+            orderLog.setOperater("system");// 系统
+            orderLog.setOperateTime(new Date());//当前日期
+            orderLog.setOrderStatus("4");
+            orderLog.setPayStatus(order.getPayStatus());
+            orderLog.setConsignStatus(order.getConsignStatus());
+            orderLog.setRemarks("超时订单，系统自动关闭");
+            orderLog.setOrderId(order.getId());
+            logMapper.insert(orderLog);
+            //更改订单状态
+            order.setOrderStatus("4");
+            order.setCloseTime(new Date());//关闭日期
+            orderMapper.updateByPrimaryKeySelective(order);
+        }
+
+
+    }
+
+    /**
      * 构建查询条件
      *
-     * @param searchMap
-     * @return
+     * @param searchMap map
+     * @return example查询条件
      */
     private Example createExample(Map<String, Object> searchMap) {
         Example example = new Example(Order.class);
