@@ -53,87 +53,28 @@
     </div>
 
     <div class="app-container">
-        <div class="box">
-            <div class="filter-container">
-                <!--查询表单-->
-                <el-form :inline="true">
-                    <el-form-item label="用户名">
-                        <el-input class="filter-item" placeholder="用户名" v-model="searchMap.loginName"></el-input>
-                    </el-form-item>
-                    <el-form-item label="密码">
-                        <el-input class="filter-item" placeholder="密码" v-model="searchMap.password"></el-input>
-                    </el-form-item>
-                    <el-form-item label="状态">
-                        <el-input class="filter-item" placeholder="状态" v-model="searchMap.status"></el-input>
-                    </el-form-item>
+        <div class="box" style="width: 60%;margin: 20px auto">
+            <el-form :model="ruleForm" :rules="rules" class="demo-ruleForm" label-width="100px" ref="ruleForm"
+                     status-icon>
 
-                    <el-button @click="fetchData()" class="dalfBut">查询</el-button>
-                    <el-button @click="formVisible=true;pojo={}" class="butT" type="primary">新增</el-button>
-                </el-form>
-            </div>
+                <el-form-item label="用户名" style="margin-top: 20px">
+                    <el-input name="username" v-model="ruleForm.loginName"></el-input>
+                </el-form-item>
+                <el-form-item class="is-required" label="旧密码">
+                    <el-input class="is-required" name="password" type="password" v-model="ruleForm.old"></el-input>
+                </el-form-item>
+                <el-form-item class="is-required" label="密码" prop="pass">
+                    <el-input autocomplete="off" type="password" v-model="ruleForm.pass"></el-input>
+                </el-form-item>
+                <el-form-item class="is-required" label="确认密码" prop="checkPass">
+                    <el-input autocomplete="off" type="password" v-model="ruleForm.checkPass"></el-input>
+                </el-form-item>
 
-            <el-table :data="tableData" border style="width: 100%">
-                <el-table-column label="id" prop="id" width="80"></el-table-column>
-                <el-table-column label="用户名" prop="loginName" width="80"></el-table-column>
-                <el-table-column label="密码" prop="password" width="80"></el-table-column>
-                <el-table-column label="状态" prop="status" width="80"></el-table-column>
-
-                <el-table-column
-                        label="操作">
-                    <template slot-scope="scope">
-                        <el-button @click="edit(scope.row.id)" size="mini" size="small" type="primary">修改</el-button>
-                        <el-button @click="dele(scope.row.id)" size="mini" size="small" type="danger">删除</el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-            <div class="pagination-container">
-                <el-pagination
-                        :current-page.sync="currentPage"
-                        :page-size="size"
-                        :page-sizes="[10, 20, 30, 40]"
-                        :total="total"
-                        @current-change="fetchData"
-                        @size-change="fetchData"
-                        class="pagiantion"
-                        layout="total, sizes, prev, pager, next, jumper">
-                </el-pagination>
-            </div>
-            <div class="add-form">
-                <!--弹出窗口-->
-                <el-dialog :visible.sync="formVisible" title="编辑">
-                    <el-form label-width="80px">
-                        <el-form-item label="用户名">
-                            <el-input v-model="pojo.loginName"></el-input>
-                        </el-form-item>
-                        <el-form-item label="密码">
-                            <el-input v-model="pojo.password"></el-input>
-                        </el-form-item>
-                        <el-form-item label="状态">
-                            <el-input v-model="pojo.status"></el-input>
-                        </el-form-item>
-
-                        <!-- 图片上传代码 如页面有图片上传功能放开注释 ****
-                        <el-form-item label="图片">
-                            <el-upload
-                                    class="avatar-uploader"
-                                    action="/upload/native.do"
-                                    :show-file-list="false"
-                                    :on-success="handleAvatarSuccess"
-                                    :before-upload="beforeAvatarUpload">
-                                <img v-if="imageUrl" :src="imageUrl" class="avatar">
-                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                            </el-upload>
-                        </el-form-item>
-                        -->
-
-                        <el-form-item>
-                            <el-button @click="save()" type="primary">保存</el-button>
-                            <el-button @click="formVisible = false">关闭</el-button>
-                        </el-form-item>
-                    </el-form>
-                </el-dialog>
-            </div>
-
+                <el-form-item>
+                    <el-button @click="submitForm('ruleForm')" type="primary">提交</el-button>
+                    <el-button @click="resetForm('ruleForm')">重置</el-button>
+                </el-form-item>
+            </el-form>
         </div>
     </div>
 
@@ -144,72 +85,78 @@
 <script src="/js/axios.js"></script>
 <script src="/js/elementui.js"></script>
 <script>
+
+
     new Vue({
         el: '#app',
         data() {
+            let validatePass = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请输入密码'));
+                } else {
+                    if (this.ruleForm.checkPass !== '') {
+                        this.$refs.ruleForm.validateField('checkPass');
+                    }
+                    callback();
+                }
+            };
+            var validatePass2 = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请再次输入密码'));
+                } else if (value !== this.ruleForm.pass) {
+                    callback(new Error('两次输入密码不一致!'));
+                } else {
+                    callback();
+                }
+            };
             return {
-                tableData: [],
-                currentPage: 1,
-                total: 10,
-                size: 10,
+
+                loginName: "",
                 searchMap: {},
-                pojo: {},
-                formVisible: false,
-                imageUrl: ''
-            }
+                imageUrl: '',
+                ruleForm: {
+                    old: '',
+                    pass: '',
+                    loginName: ""
+                },
+                rules: {
+                    pass: [
+                        {validator: validatePass, trigger: 'blur'}
+                    ],
+                    checkPass: [
+                        {validator: validatePass2, trigger: 'blur'}
+                    ]
+                }
+            };
+
         },
         created() {
             this.fetchData();
         },
         methods: {
             fetchData() {
-                axios.post(`/admin/findPage.do?page=${this.currentPage}&size=${this.size}`, this.searchMap).then(response => {
-                    this.tableData = response.data.rows;
-                    this.total = response.data.total;
-                });
-            },
-            save() {
-                // this.pojo.image= this.imageUrl; //如页面有图片上传功能放开注释
-                axios.post(`/admin/${this.pojo.id == null ? 'add' : 'update'}.do`, this.pojo).then(response => {
-                    this.fetchData(); //刷新列表
-                    this.formVisible = false;//关闭窗口
-                });
-            },
-            edit(id) {
-                this.formVisible = true // 打开窗口
-                // 调用查询
-                axios.get(`/admin/findById.do?id=${id}`).then(response => {
-                    this.pojo = response.data;
-                    // this.imageUrl=this.pojo.image //显示图片  如页面有图片上传功能放开注释
+                axios.get("/login/name.do").then(res => {
+                    this.ruleForm.loginName = res.data.name
                 })
             },
-            dele(id) {
-                this.$confirm('确定要删除此记录吗?', '提示', {
-                    confirmButtonText: '确定',
-                    cancelButtonText: '取消',
-                    type: 'warning'
-                }).then(() => {
-                    axios.get(`/admin/delete.do?id=${id}`).then(response => {
-                        this.fetchData(); //刷新列表
-                    })
-                })
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        // alert('submit!');
+                        // // todo
+                        axios.post("/admin/updateAdminPassword.do", this.ruleForm).then(() => {
+                            location.href = `/login.html`;
+                        })
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
             },
-            /* ****图片上传相关代码  如页面有图片上传功能放开注释 ****
-            handleAvatarSuccess(res, file) {
-                this.imageUrl = file.response;
-            },
-            beforeAvatarUpload(file) {
-                const isJPG = file.type === 'image/jpeg';
-                const isLt2M = file.size / 1024 / 1024 < 2;
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            }
 
-                if (!isJPG) {
-                    this.$message.error('上传头像图片只能是 JPG 格式!');
-                }
-                if (!isLt2M) {
-                    this.$message.error('上传头像图片大小不能超过 2MB!');
-                }
-                return isJPG && isLt2M;
-            }*/
         }
     })
 </script>

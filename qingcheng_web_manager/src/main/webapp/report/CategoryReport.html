@@ -37,16 +37,16 @@
             <el-table-column
                     label="分类名称"
                     prop="category1Name"
-                    width="250">
+                    width="180">
             </el-table-column>
             <el-table-column
                     label="销售量"
                     prop="num"
-                    width="250">
+                    width="106">
             </el-table-column>
             <el-table-column
                     label="销售量占比"
-                    width="250">
+                    width="180">
                 <template slot-scope="scope">
                     {{((scope.row.num/totalNum)*100).toFixed(2)}}%
                 </template>
@@ -54,11 +54,11 @@
             <el-table-column
                     label="销售额"
                     prop="money"
-                    width="250">
+                    width="180">
             </el-table-column>
             <el-table-column
                     label="销售额占比"
-                    width="250">
+                    width="180">
                 <template slot-scope="scope">
                     {{(scope.row.money/totalMoney*100).toFixed(2)}}%
                 </template>

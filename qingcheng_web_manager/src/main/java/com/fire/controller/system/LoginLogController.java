@@ -5,6 +5,7 @@ import com.fire.entity.PageResult;
 import com.fire.entity.Result;
 import com.fire.pojo.system.LoginLog;
 import com.fire.service.system.LoginLogService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -24,6 +25,22 @@ public class LoginLogController {
     @GetMapping("/findPage")
     public PageResult<LoginLog> findPage(int page, int size) {
         return loginLogService.findPage(page, size);
+    }
+
+    /**
+     * 查询当前登录人的登录日志
+     *
+     * @param page
+     * @param size
+     * @return
+     */
+    @GetMapping("/findPageByLogin")
+    public PageResult<LoginLog> findPageByLogin(int page, int size) {
+//        添加条件
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        Map map = new HashMap();
+        map.put("loginName", name);
+        return loginLogService.findPage(map, page, size);
     }
 
     @PostMapping("/findList")

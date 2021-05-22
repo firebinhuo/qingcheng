@@ -5,6 +5,9 @@ import com.fire.entity.PageResult;
 import com.fire.entity.Result;
 import com.fire.pojo.system.Admin;
 import com.fire.service.system.AdminService;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -60,4 +63,31 @@ public class AdminController {
         return new Result();
     }
 
+    @PostMapping("/updateAdminPassword")
+    public Result updateAdminPassword(@RequestBody Map<String, String> map) {
+        System.out.println(map.get("pass"));
+        System.out.println(map.get("old"));
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        Map<String, Object> map1 = new HashMap();
+        map1.put("loginName", map.get("loginName"));
+        if (!name.equals(map.get("loginName"))) {
+            throw new RuntimeException("登录名称有误");
+        }
+        List<Admin> list = adminService.findList(map1);
+        if (list.size() == 0) {
+            throw new RuntimeException("不存在该用户");
+        }
+        String password = list.get(0).getPassword();
+        Integer id = list.get(0).getId();
+        Admin admin = new Admin();
+        if (BCrypt.checkpw(map.get("old"), password)) {
+            System.out.println("success");
+
+            String pass = new BCryptPasswordEncoder().encode(map.get("pass"));
+            admin.setPassword(pass);
+            admin.setId(id);
+            adminService.update(admin);
+        }
+        return new Result();
+    }
 }
