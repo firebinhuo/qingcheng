@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class OrderFull implements Serializable {
     private Order order;
+
     private OrderItem orderItem;
 
     public Order getOrder() {

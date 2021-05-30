@@ -25,7 +25,7 @@ public interface AdminService {
 
     public Admin findById(Integer id);
 
-    public void add(Admin admin);
+    public Integer add(Admin admin);
 
 
     public void update(Admin admin);

@@ -5,6 +5,7 @@ import com.fire.entity.PageResult;
 import com.fire.entity.Result;
 import com.fire.pojo.system.Menu;
 import com.fire.service.system.MenuService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -19,6 +20,20 @@ public class MenuController {
     @GetMapping("/findAll")
     public List<Menu> findAll() {
         return menuService.findAll();
+    }
+
+    @GetMapping("/findMenu")
+    public List<Map> findMenu() {
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Map> menuByUsername = menuService.findMenuByUsername(name);
+        return menuByUsername;
+    }
+
+    @GetMapping("/findAllMenu")
+    public List<Map> findAllMenu() {
+
+        List<Map> menuByUsername = menuService.findAllMenu();
+        return menuByUsername;
     }
 
     @GetMapping("/findPage")
@@ -60,9 +75,5 @@ public class MenuController {
         return new Result();
     }
 
-    @GetMapping("/findMenu")
-    public List<Map> findMenu() {
-        return menuService.findAllMenu();
-    }
 
 }

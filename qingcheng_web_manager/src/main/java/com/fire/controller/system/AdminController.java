@@ -4,10 +4,15 @@ import com.alibaba.dubbo.config.annotation.Reference;
 import com.fire.entity.PageResult;
 import com.fire.entity.Result;
 import com.fire.pojo.system.Admin;
+import com.fire.pojo.system.AdminRole;
+import com.fire.pojo.system.Admin_role;
+import com.fire.service.system.AdminRoleService;
 import com.fire.service.system.AdminService;
+import com.fire.service.system.RoleService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -18,6 +23,9 @@ public class AdminController {
 
     @Reference
     private AdminService adminService;
+
+    @Reference
+    private AdminRoleService adminRoleService;
 
     @GetMapping("/findAll")
     public List<Admin> findAll() {
@@ -40,20 +48,59 @@ public class AdminController {
     }
 
     @GetMapping("/findById")
-    public Admin findById(Integer id) {
-        return adminService.findById(id);
+    public AdminRole findById(Integer id) {
+        return adminRoleService.findById(id);
     }
 
-
     @PostMapping("/add")
-    public Result add(@RequestBody Admin admin) {
-        adminService.add(admin);
+    public Result add(@RequestBody Map<String, Object> map) {
+        Admin admin = new Admin();
+        String name = (String) map.get("loginName");
+        String pass = (String) map.get("password");
+        pass = new BCryptPasswordEncoder().encode(pass);
+        admin.setStatus("1");
+        admin.setPassword(pass);
+        admin.setLoginName(name);
+        Integer id = adminService.add(admin);
+        System.out.println("************\n*********");
+        System.out.println(id);
+        List<Integer> list = (List) map.get("commit_role");
+
+        Admin_role admin_role = new Admin_role();
+        admin_role.setAdmin_id(id);
+        for (Integer i : list) {
+            admin_role.setRole_id(i);
+            adminRoleService.add(admin_role);
+            System.out.println(i);
+        }
+
         return new Result();
     }
 
     @PostMapping("/update")
-    public Result update(@RequestBody Admin admin) {
+    public Result update(@RequestBody Map<String, Object> map) {
+        Admin admin = new Admin();
+        String name = (String) map.get("loginName");
+        String pass = (String) map.get("password");
+        Integer id = (Integer) map.get("id");
+        admin.setLoginName(name);
+        if (!"".equals(pass)) {
+            pass = new BCryptPasswordEncoder().encode(pass);
+        }
+        admin.setPassword(pass);
+        admin.setId(id);
         adminService.update(admin);
+
+//        对admin和role联合表的修改
+        List<Integer> list = (List) map.get("commit_role");
+        adminRoleService.delById(id);
+        Admin_role admin_role = new Admin_role();
+        admin_role.setAdmin_id(id);
+        for (Integer i : list) {
+            admin_role.setRole_id(i);
+            adminRoleService.add(admin_role);
+            System.out.println(i);
+        }
         return new Result();
     }
 

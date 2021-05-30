@@ -122,10 +122,22 @@ public class MenuServiceImpl implements MenuService {
         return findMenuListByParentId(menuList, "0");
     }
 
+    /**
+     * 根据用户名查询对应的权限下的菜单展示
+     *
+     * @param username
+     * @return
+     */
+    @Override
+    public List<Map> findMenuByUsername(String username) {
+        List<Menu> menuByUsername = menuMapper.findMenuByUsername(username);
+        return findMenuListByParentId(menuByUsername, "0");
+    }
+
     private List<Map> findMenuListByParentId(List<Menu> list, String parentId) {//查询下级菜单
         List<Map> mapList = new ArrayList<>();
         for (Menu menu : list) {
-            if (menu.getParentId().equals(parentId)) {
+            if (parentId.equals(menu.getParentId())) {
                 Map map = new HashMap<>();
                 map.put("path", menu.getId());
                 map.put("title", menu.getName());
@@ -137,6 +149,7 @@ public class MenuServiceImpl implements MenuService {
         }
         return mapList;
     }
+
 
     /**
      * 构建查询条件

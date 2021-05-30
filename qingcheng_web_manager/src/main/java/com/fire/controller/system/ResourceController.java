@@ -4,7 +4,9 @@ import com.alibaba.dubbo.config.annotation.Reference;
 import com.fire.entity.PageResult;
 import com.fire.entity.Result;
 import com.fire.pojo.system.Resource;
+import com.fire.pojo.system.Role_Resource;
 import com.fire.service.system.ResourceService;
+import com.fire.service.system.RoleResourceService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -16,9 +18,12 @@ public class ResourceController {
     @Reference
     private ResourceService resourceService;
 
+    @Reference
+    private RoleResourceService roleResourceService;
+
     @GetMapping("/findAll")
-    public List<Resource> findAll() {
-        return resourceService.findAll();
+    public List<Map> findAll() {
+        return resourceService.findAllResource();
     }
 
     @GetMapping("/findPage")
@@ -27,8 +32,14 @@ public class ResourceController {
     }
 
     @PostMapping("/findList")
-    public List<Resource> findList(@RequestBody Map<String, Object> searchMap) {
-        return resourceService.findList(searchMap);
+    public List<Integer> findList(@RequestBody Map<String, Object> searchMap) {
+        List<Integer> list = new ArrayList();
+        List<Role_Resource> role_resourceList = roleResourceService.findById(searchMap);
+        for (Role_Resource role_resource : role_resourceList) {
+            list.add(role_resource.getResource_id());
+        }
+        return list;
+
     }
 
     @PostMapping("/findPage")
@@ -59,5 +70,6 @@ public class ResourceController {
         resourceService.delete(id);
         return new Result();
     }
+
 
 }

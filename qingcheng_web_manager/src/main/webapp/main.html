@@ -168,9 +168,10 @@
             // this.menuList = menu.data
 
             //加载菜单数据
-            axios.get("/menu/findMenu.do",).then((res) => {
+            axios.get("/menu/findAllMenu.do",).then((res) => {
                 this.menuList = res.data
-                this.data = res.data[1]
+                console.log(res.data)
+                this.data = res.data[0]
                 // 导航默认选择
                 let data = []
                 for (let i = 0; i < this.data.children.length; i++) {
@@ -182,7 +183,7 @@
             });
 
             //    加载并显示当前登录名
-            axios.get("/login/name.do").then(res => {
+            axios.get("/loginGet/name.do").then(res => {
                 this.loginName = res.data.name;
             })
         },

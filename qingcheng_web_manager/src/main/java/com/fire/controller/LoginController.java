@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/login")
+@RequestMapping("/loginGet")
 public class LoginController {
     @GetMapping("/name")
     public Map showName() {

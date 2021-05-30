@@ -12,12 +12,26 @@
     <http pattern="/plugins/**" security="none"></http>
     <http pattern="/login.html" security="none"></http>
 
-
     <!--    页面拦截规则-->
 
     <http>
-        <!--        所有资源必须由ROLE_ADMIN角色才可以访问-->
-        <intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"></intercept-url>
+        <!--        所有资源必须由ROLE_ADMIN角色才可以访问
+        一般只能用权限来控制，角色一般是固定的，不能修改-->
+        <!--        <intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"></intercept-url>-->
+        <!--        <intercept-url pattern="/*/find*.do" access="hasAnyAuthority()"/>-->
+        <intercept-url pattern="/login/name.do" access="hasAnyAuthority()"/>
+        <intercept-url pattern="/brand/*.do" access="hasAuthority('brand')"/>
+        <intercept-url pattern="/spu/save.do" access="hasAnyAuthority('goods_add','goods_edit')"/>
+
+
+        <!--
+        hasAnyAuthority()：拥有任意权限都可以访问
+        hasAuthority('brand')： 拥有brand的权限可以访问
+        hasAnyAuthority('goods_add','goods_edit')" ：拥有goods_add和goods_edit其中一个
+        权限就可以访问
+        //任意权限都可以访问-->
+
+
         <!--        让当前工程实现表单登录-->
         <form-login login-page="/login.html"
                     default-target-url="/main.html"
@@ -35,7 +49,13 @@
             <frame-options policy="SAMEORIGIN"/>
         </headers>
 
+        <!--        <anonymous enabled="false"></anonymous>-->
+
     </http>
+
+
+    <!--    基于方法的访问控制-->
+    <global-method-security pre-post-annotations="enabled"></global-method-security>
 
     <!--    认证管理器-->
     <authentication-manager>

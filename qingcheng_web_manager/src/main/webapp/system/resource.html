@@ -8,36 +8,41 @@
     <link href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" rel="stylesheet">
     <link href="../plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
-
-    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
     <style>
-        .avatar-uploader .el-upload {
-            border: 1px dashed #d9d9d9;
-            border-radius: 6px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
+        .el-row {
+            margin-bottom: 20px;
         }
 
-        .avatar-uploader .el-upload:hover {
-            border-color: #409EFF;
+        .el-row:last-child {
+            margin-bottom: 0;
         }
 
-        .avatar-uploader-icon {
-            font-size: 28px;
-            color: #8c939d;
-            width: 150px;
-            height: 70px;
-            line-height: 150px;
-            text-align: center;
+        .el-col {
+
+            border-radius: 4px;
         }
 
-        .avatar {
-            width: 150px;
-            height: 70px;
-            display: block;
+        .bg-purple-dark {
+            background: #99a9bf;
         }
 
+        .bg-purple {
+            background: #d3dce6;
+        }
+
+        .bg-purple-light {
+            background: #e5e9f2;
+        }
+
+        .grid-content {
+            border-radius: 4px;
+            min-height: 36px;
+        }
+
+        .row-bg {
+            padding: 10px 0;
+            background-color: #f9fafc;
+        }
     </style>
 </head>
 <body class="hold-transition">
@@ -54,85 +59,26 @@
 
     <div class="app-container">
         <div class="box">
-            <div class="filter-container">
-                <!--查询表单-->
-                <el-form :inline="true">
-                    <el-form-item label="res_key">
-                        <el-input class="filter-item" placeholder="res_key" v-model="searchMap.resKey"></el-input>
-                    </el-form-item>
-                    <el-form-item label="res_name">
-                        <el-input class="filter-item" placeholder="res_name" v-model="searchMap.resName"></el-input>
-                    </el-form-item>
-                    <el-form-item label="parent_id">
-                        <el-input class="filter-item" placeholder="parent_id" v-model="searchMap.parentId"></el-input>
-                    </el-form-item>
+            <el-checkbox :indeterminate="isIndeterminate" @change="handleCheckAllChange" v-model="checkAll">全选
+            </el-checkbox>
+            <div style="margin: 15px 0;"></div>
+            <el-row :gutter="60" class="row-bg">
+                <el-checkbox-group @change="handleCheckedCitiesChange" v-model="checkedCities">
+                    <el-col :span="6" v-for="city in cities">
+                        <div class="grid-content bg-purple" style="margin: 20px 0">
+                            <el-checkbox
+                                    :key="city.resKey"
+                                    :label="city.resName" border
+                                    style=" border-radius: 4px;width: 100px;height:40px;font-size: larger;line-height: 40px"
+                            >{{city.resName}}
+                            </el-checkbox>
+                        </div>
+                    </el-col>
 
-                    <el-button @click="fetchData()" class="dalfBut">查询</el-button>
-                    <el-button @click="formVisible=true;pojo={}" class="butT" type="primary">新增</el-button>
-                </el-form>
-            </div>
 
-            <el-table :data="tableData" border style="width: 100%">
-                <el-table-column label="id" prop="id" width="80"></el-table-column>
-                <el-table-column label="res_key" prop="resKey" width="80"></el-table-column>
-                <el-table-column label="res_name" prop="resName" width="80"></el-table-column>
-                <el-table-column label="parent_id" prop="parentId" width="80"></el-table-column>
+                </el-checkbox-group>
 
-                <el-table-column
-                        label="操作">
-                    <template slot-scope="scope">
-                        <el-button @click="edit(scope.row.id)" size="mini" size="small" type="primary">修改</el-button>
-                        <el-button @click="dele(scope.row.id)" size="mini" size="small" type="danger">删除</el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-            <div class="pagination-container">
-                <el-pagination
-                        :current-page.sync="currentPage"
-                        :page-size="size"
-                        :page-sizes="[10, 20, 30, 40]"
-                        :total="total"
-                        @current-change="fetchData"
-                        @size-change="fetchData"
-                        class="pagiantion"
-                        layout="total, sizes, prev, pager, next, jumper">
-                </el-pagination>
-            </div>
-            <div class="add-form">
-                <!--弹出窗口-->
-                <el-dialog :visible.sync="formVisible" title="编辑">
-                    <el-form label-width="80px">
-                        <el-form-item label="res_key">
-                            <el-input v-model="pojo.resKey"></el-input>
-                        </el-form-item>
-                        <el-form-item label="res_name">
-                            <el-input v-model="pojo.resName"></el-input>
-                        </el-form-item>
-                        <el-form-item label="parent_id">
-                            <el-input v-model="pojo.parentId"></el-input>
-                        </el-form-item>
-
-                        <!-- 图片上传代码 如页面有图片上传功能放开注释 ****
-                        <el-form-item label="图片">
-                            <el-upload
-                                    class="avatar-uploader"
-                                    action="/upload/native.do"
-                                    :show-file-list="false"
-                                    :on-success="handleAvatarSuccess"
-                                    :before-upload="beforeAvatarUpload">
-                                <img v-if="imageUrl" :src="imageUrl" class="avatar">
-                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                            </el-upload>
-                        </el-form-item>
-                        -->
-
-                        <el-form-item>
-                            <el-button @click="save()" type="primary">保存</el-button>
-                            <el-button @click="formVisible = false">关闭</el-button>
-                        </el-form-item>
-                    </el-form>
-                </el-dialog>
-            </div>
+            </el-row>
 
         </div>
     </div>
@@ -143,10 +89,12 @@
 <script src="/js/vue.js"></script>
 <script src="/js/axios.js"></script>
 <script src="/js/elementui.js"></script>
+<script src="/js/util.js"></script>
 <script>
     new Vue({
         el: '#app',
         data() {
+
             return {
                 tableData: [],
                 currentPage: 1,
@@ -154,22 +102,27 @@
                 size: 10,
                 searchMap: {},
                 pojo: {},
-                formVisible: false,
-                imageUrl: ''
+
+                checkAll: false,
+                checkedCities: [],
+                cities: [],
+                isIndeterminate: true,
+                resources: []
             }
         },
         created() {
+            let id = getQueryString("id");
+            this.searchMap.role_id = id;
             this.fetchData();
         },
         methods: {
             fetchData() {
-                axios.post(`/resource/findPage.do?page=${this.currentPage}&size=${this.size}`, this.searchMap).then(response => {
-                    this.tableData = response.data.rows;
-                    this.total = response.data.total;
+                axios.post(`/resource/findList.do?`, this.searchMap).then(response => {
+                    this.cities = response.data
+                    // console.log(response.data)
                 });
             },
             save() {
-                // this.pojo.image= this.imageUrl; //如页面有图片上传功能放开注释
                 axios.post(`/resource/${this.pojo.id == null ? 'add' : 'update'}.do`, this.pojo).then(response => {
                     this.fetchData(); //刷新列表
                     this.formVisible = false;//关闭窗口
@@ -194,22 +147,20 @@
                     })
                 })
             },
-            /* ****图片上传相关代码  如页面有图片上传功能放开注释 ****
-            handleAvatarSuccess(res, file) {
-                this.imageUrl = file.response;
+            /**
+             * 复选框函数
+             * @param val
+             */
+            handleCheckAllChange(val) {
+                this.checkedCities = val ? this.cities : [];
+                this.isIndeterminate = false;
             },
-            beforeAvatarUpload(file) {
-                const isJPG = file.type === 'image/jpeg';
-                const isLt2M = file.size / 1024 / 1024 < 2;
+            handleCheckedCitiesChange(value) {
+                let checkedCount = value.length;
+                this.checkAll = checkedCount === this.cities.length;
+                this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+            }
 
-                if (!isJPG) {
-                    this.$message.error('上传头像图片只能是 JPG 格式!');
-                }
-                if (!isLt2M) {
-                    this.$message.error('上传头像图片大小不能超过 2MB!');
-                }
-                return isJPG && isLt2M;
-            }*/
         }
     })
 </script>

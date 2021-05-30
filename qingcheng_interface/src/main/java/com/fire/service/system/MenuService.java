@@ -33,6 +33,8 @@ public interface MenuService {
 
     public void delete(String id);
 
-    public List<Map> findAllMenu();
+    List<Map> findAllMenu();
+
+    List<Map> findMenuByUsername(String username);
 
 }

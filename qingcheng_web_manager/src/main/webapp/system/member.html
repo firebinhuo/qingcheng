@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>role管理</title>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <!-- 引入样式 -->
+    <link href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" rel="stylesheet">
+    <link href="../plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理<small>成员管理</small></h1>
+        <el-breadcrumb class="breadcrumb" separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>成员管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <!--查询表单-->
+                <el-form :inline="true">
+                    <el-form-item label="角色名称">
+                        <el-input class="filter-item" placeholder="角色名称" v-model="searchMap.name"></el-input>
+                    </el-form-item>
+
+                    <el-button @click="fetchData()" class="dalfBut">查询</el-button>
+                    <el-button @click="formVisible=true;pojo={};add()" class="butT" type="primary">新增</el-button>
+                </el-form>
+            </div>
+
+            <el-table :data="tableData" border style="width: 100%">
+                <el-table-column label="成员账号" prop="id" width="80"></el-table-column>
+                <el-table-column label="成员姓名" prop="loginName" width="80"></el-table-column>
+
+                <el-table-column
+                        label="操作">
+                    <template slot-scope="scope">
+                        <el-button @click="edit(scope.row.id)" size="mini" size="small" type="primary">修改
+                        </el-button>
+                        <el-button @click="dele(scope.row.id)" size="mini" size="small" type="danger">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        :current-page.sync="currentPage"
+                        :page-size="size"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :total="total"
+                        @current-change="fetchData"
+                        @size-change="fetchData"
+                        class="pagiantion"
+                        layout="total, sizes, prev, pager, next, jumper">
+                </el-pagination>
+            </div>
+            <div class="add-form">
+                <!--弹出窗口-->
+                <el-dialog :visible.sync="formVisible" title="编辑">
+                    <el-form :model="ruleForm" :rules="rules" class="demo-ruleForm" label-width="80px" ref="ruleForm">
+                        <el-form-item label="成员姓名">
+                            <el-input v-model="ruleForm.loginName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="所属角色">
+                            <el-select multiple placeholder="请选择" v-model="commit_roles">
+                                <el-option
+                                        :key="item.id"
+                                        :label="item.name"
+                                        :value="item.id"
+                                        v-for="item in options">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item class="is-required" label="密码">
+                            <el-input autocomplete="off" type="password" v-model="ruleForm.password"></el-input>
+                        </el-form-item>
+                        <el-form-item class="is-required" label="确认密码">
+                            <el-input autocomplete="off" type="password" v-model="ruleForm.checkPass"></el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button @click="submitForm('ruleForm')" type="primary">提交</el-button>
+                            <el-button @click="resetForm('ruleForm')">重置</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-dialog>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            let validatePass = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请输入密码'));
+                } else {
+                    if (this.ruleForm.checkPass !== '') {
+                        this.$refs.ruleForm.validateField('checkPass');
+                    }
+                    callback();
+                }
+            };
+            let validatePass2 = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请再次输入密码'));
+                } else if (value !== this.ruleForm.password) {
+                    callback(new Error('两次输入密码不一致!'));
+                } else {
+                    callback();
+                }
+            };
+            return {
+                tableData: [],
+                currentPage: 1,
+                total: 10,
+                size: 10,
+                searchMap: {},
+                pojo: {},
+                formVisible: false,
+                options: [],
+                commit_roles: [],
+                ruleForm: {
+                    commit_role: [],//提交角色信息数组
+                    password: "",
+                    loginName: "",
+                    checkPass: ""
+                },
+                rules: {
+                    pass: [
+                        {validator: validatePass, trigger: 'blur'}
+                    ],
+                    checkPass: [
+                        {validator: validatePass2, trigger: 'blur'}
+                    ]
+                }
+            }
+        },
+        created() {
+            this.fetchData();
+        },
+        methods: {
+            fetchData() {
+                axios.post(`/admin/findPage.do?page=${this.currentPage}&size=${this.size}`, this.searchMap).then(response => {
+                    this.tableData = response.data.rows;
+                    this.total = response.data.total;
+                });
+            },
+            //todo  可以设置为缓存
+            add() {
+                axios.get("/role/findAll.do").then(res => {
+                    this.options = res.data;
+                })
+            },
+            save() {
+                axios.post(`/admin/${this.ruleForm.id == null ? 'add' : 'update'}.do`, this.ruleForm).then(response => {
+                    this.fetchData(); //刷新列表
+                    this.formVisible = false;//关闭窗口
+                });
+            },
+            edit(id) {
+                this.formVisible = true // 打开窗口
+                // 调用查询
+                axios.get(`/admin/findById.do?id=${id}`).then(response => {
+                    this.add();
+                    this.ruleForm = response.data.admin;
+                    this.ruleForm.password = ""
+                    this.ruleForm.checkPass = ""
+                    let arr = []
+                    //向角色选择器中预置元素
+                    response.data.role.forEach((ele, index) => {
+                        arr.push(ele.id)
+                    })
+                    this.commit_roles = arr
+                })
+            },
+            dele(id) {
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.get(`/admin/delete.do?id=${id}`).then(response => {
+                        this.fetchData(); //刷新列表
+                    })
+                })
+            },
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        // alert('submit!');
+                        // todo
+                        this.ruleForm.commit_role = this.commit_roles
+                        console.log(this.ruleForm)
+                        this.save()
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            }
+
+        }
+    })
+</script>
+</html>

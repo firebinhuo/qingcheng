@@ -33,4 +33,7 @@ public interface ResourceService {
 
     public void delete(Integer id);
 
+    List<Map> findAllResource();
+
+    List<String> findResKeyByLoginName(String s);
 }

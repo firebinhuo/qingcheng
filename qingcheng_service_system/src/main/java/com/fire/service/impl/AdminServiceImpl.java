@@ -82,8 +82,9 @@ public class AdminServiceImpl implements AdminService {
      *
      * @param admin
      */
-    public void add(Admin admin) {
+    public Integer add(Admin admin) {
         adminMapper.insert(admin);
+        return admin.getId();
     }
 
     /**

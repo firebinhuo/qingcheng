@@ -10,6 +10,8 @@ import com.fire.service.system.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +52,40 @@ public class ResourceServiceImpl implements ResourceService {
     public List<Resource> findList(Map<String, Object> searchMap) {
         Example example = createExample(searchMap);
         return resourceMapper.selectByExample(example);
+    }
+
+    /**
+     * 树状查询resource表（id组合parent_id）
+     */
+
+    public List<Map> findAllResource() {
+        List<Resource> resourceList = findAll();
+        return findResourceByParentId(resourceList, 0);
+
+    }
+
+    public List<Map> findResourceByParentId(List<Resource> resourceList, Integer parent_id) {
+        List<Map> mapList = new ArrayList<>();
+        for (Resource resource : resourceList) {
+            Map map = new HashMap();
+            if (resource.getParentId().equals(parent_id)) {
+                map.put("resource", resource);
+                map.put("children", findResourceByParentId(resourceList, resource.getId()));
+                mapList.add(map);
+            }
+        }
+        return mapList;
+    }
+
+    /**
+     * 根据用户名查找对应的权限
+     *
+     * @param s
+     * @return
+     */
+    @Override
+    public List<String> findResKeyByLoginName(String s) {
+        return resourceMapper.findResKeyByLoginName(s);
     }
 
     /**

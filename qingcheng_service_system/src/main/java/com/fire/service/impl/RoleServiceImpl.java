@@ -25,6 +25,7 @@ public class RoleServiceImpl implements RoleService {
      * @return
      */
     public List<Role> findAll() {
+
         return roleMapper.selectAll();
     }
 

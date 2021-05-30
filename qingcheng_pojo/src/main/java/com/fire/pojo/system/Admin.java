@@ -1,8 +1,6 @@
 package com.fire.pojo.system;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 
 /**
@@ -12,8 +10,9 @@ import java.io.Serializable;
  */
 @Table(name = "tb_admin")
 public class Admin implements Serializable {
-    @Column
     @Id
+    @Column
+    @GeneratedValue(strategy = GenerationType.IDENTITY)//主键自增
     private Integer id;//id
 
 
