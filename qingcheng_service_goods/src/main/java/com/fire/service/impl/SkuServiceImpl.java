@@ -1,6 +1,7 @@
 package com.fire.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.fire.utils.CacheKey;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.SkuMapper;
@@ -8,8 +9,10 @@ import com.fire.entity.PageResult;
 import com.fire.pojo.goods.Sku;
 import com.fire.service.goods.SkuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -102,6 +105,66 @@ public class SkuServiceImpl implements SkuService {
      */
     public void delete(String id) {
         skuMapper.deleteByPrimaryKey(id);
+    }
+
+    /**
+     * 将sku价格缓存到redis中
+     */
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Override
+    public void saveAllPriceToRedis() {
+//        检查redis中是否存在sku_price
+        if (!redisTemplate.hasKey(CacheKey.SKU_PRICE)) {
+//            没有则加载所有的sku_price
+            List<Sku> skuList = skuMapper.selectAll();
+            List<Sku> skus = new ArrayList<>();
+            for (int i = 0; i < 100; i++) {
+                Sku sku = skuList.get(i);
+                skus.add(sku);
+            }
+
+            for (Sku sku : skus) {
+                if ("1".equals(sku.getStatus())) {
+                    redisTemplate.boundHashOps(CacheKey.SKU_PRICE).put(sku.getId(), sku.getPrice());
+                }
+
+            }
+        } else {
+            System.out.println("sku price is already exist!!!!");
+        }
+
+    }
+
+    /***
+     * 根据id查询价格实现类
+     * @param id 查询id
+     * @return 返回价格
+     */
+    @Override
+    public Integer findPriceById(String id) {
+
+        return (Integer) redisTemplate.boundHashOps(CacheKey.SKU_PRICE).get(id);
+
+    }
+
+    /**
+     * 更具id查询价格
+     *
+     * @param id
+     * @param price
+     */
+    @Override
+    public void savePriceById(String id, Integer price) {
+
+        redisTemplate.boundHashOps(CacheKey.SKU_PRICE).put(id, price);//覆盖
+
+    }
+
+    @Override
+    public void deletePriceFromRedis(String id) {
+        redisTemplate.boundHashOps(CacheKey.SKU_PRICE).delete(id);
     }
 
     /**

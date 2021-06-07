@@ -33,4 +33,29 @@ public interface SkuService {
 
     public void delete(String id);
 
+    public void saveAllPriceToRedis();
+
+    /**
+     * 根据sku_id查询价格
+     *
+     * @param id
+     * @return
+     */
+    public Integer findPriceById(String id);
+
+    /**
+     * 根据ID，存入价格
+     *
+     * @param id
+     * @param price
+     */
+    public void savePriceById(String id, Integer price);
+
+    /**
+     * 根据sku的id删除缓存
+     *
+     * @param id
+     */
+    public void deletePriceFromRedis(String id);
+
 }

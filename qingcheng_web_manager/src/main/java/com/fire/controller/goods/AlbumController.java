@@ -13,6 +13,12 @@ import java.util.*;
 @RequestMapping("/album")
 public class AlbumController {
 
+
+    public int fn(int a, int b) {
+        return a > b ? 1 : 0;
+    }
+
+
     @Reference
     private AlbumService albumService;
 

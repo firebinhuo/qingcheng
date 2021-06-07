@@ -4,16 +4,19 @@ import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.fire.dao.*;
 import com.fire.pojo.goods.*;
+import com.fire.service.goods.SkuService;
 import com.fire.utils.IdWorker;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.entity.PageResult;
 import com.fire.service.goods.SpuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -128,14 +131,31 @@ public class SpuServiceImpl implements SpuService {
         spuMapper.updateByPrimaryKeySelective(spu);
     }
 
+
+    @Autowired
+    private SkuService skuService;
+
+
     /**
      * 删除
      *
      * @param id
      */
     public void delete(String id) {
+        //        删除缓存中的价格
+        Map map = new HashMap();
+        map.put("spuId", id);
+        List<Sku> skuList = skuService.findList(map);
+        for (Sku sku : skuList) {
+            skuService.deletePriceFromRedis(id);
+        }
+
+
         spuMapper.deleteByPrimaryKey(id);
+
+
     }
+
 
     /**
      * 商品的添加以及和品牌建立关联（三级template列表）
@@ -196,7 +216,11 @@ public class SpuServiceImpl implements SpuService {
 
             sku.setCommentNum(0);//评论数
             sku.setSaleNum(0);//销售数量
+
+
             skuMapper.insertSelective(sku);
+            //            重新将价格更新到缓存
+            skuService.savePriceById(sku.getId(), sku.getPrice());
         }
         /**
          *建立分类和品牌的关联

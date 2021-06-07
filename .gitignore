@@ -22,6 +22,8 @@
 /qingcheng_service_system/target/
 /qingcheng_service_system/qingcheng_service_system.iml
 /qingcheng_service_user/qingcheng_service_user.iml
-/qingcheng_service_user/target
+/qingcheng_service_user/target/
 /qingcheng_web_manager/target/
 /qingcheng_web_manager/qingcheng_web_manager.iml
+/qingcheng_web_portal/qingcheng_web_portal.iml
+/qingcheng_web_portal/target/

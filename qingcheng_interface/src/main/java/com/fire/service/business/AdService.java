@@ -33,4 +33,18 @@ public interface AdService {
 
     public void delete(Integer id);
 
+    public List<Ad> findBYPosition(String position);
+
+    /**
+     * 将某个位置的广告存入缓存（不仅仅是轮播图的广告）
+     *
+     * @param position
+     */
+    public void saveADdToRedisByPosition(String position);
+
+    /**
+     * 将全部广告存入redis
+     */
+    public void saveAllAdToRedis();
+
 }

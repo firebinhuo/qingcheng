@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+    <!--	spring整合的模板解析器-->
+    <bean id="templateResolver"
+          class="org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver">
+        <!--		配置前缀-->
+        <property name="prefix" value="/WEB-INF/templates/"/>
+        <!--		配置后缀，配置扩展名-->
+        <property name="suffix" value=".html"/>
+        <!--		配置编码格式  字符集-->
+        <property name="characterEncoding" value="UTF-8"/>
+        <!--		配置文件类型-->
+        <property name="templateMode" value="HTML5"/>
+    </bean>
+    <!--模板引擎配置-->
+    <bean id="templateEngine"
+          class="org.thymeleaf.spring5.SpringTemplateEngine">
+        <property name="templateResolver" ref="templateResolver"/>
+    </bean>
+    <!---模板的视图解析器-->
+    <bean id="viewResolver" class="org.thymeleaf.spring5.view.ThymeleafViewResolver">
+        <property name="templateEngine" ref="templateEngine"/>
+        <property name="characterEncoding" value="UTF-8"/>
+    </bean>
+
+</beans>

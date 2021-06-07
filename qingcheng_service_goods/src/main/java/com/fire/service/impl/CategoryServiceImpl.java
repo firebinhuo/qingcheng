@@ -1,6 +1,7 @@
 package com.fire.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.fire.utils.CacheKey;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.CategoryMapper;
@@ -8,8 +9,11 @@ import com.fire.entity.PageResult;
 import com.fire.pojo.goods.Category;
 import com.fire.service.goods.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,12 +82,21 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /**
+     * 实现方法
+     * 1.查询商品分类导航
+     * 2.存入redis
+     */
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    /**
      * 新增
      *
      * @param category
      */
     public void add(Category category) {
         categoryMapper.insert(category);
+        saveCategoryTreeToRedis();//数据修改后重新进行缓存预热
     }
 
     /**
@@ -93,6 +106,7 @@ public class CategoryServiceImpl implements CategoryService {
      */
     public void update(Category category) {
         categoryMapper.updateByPrimaryKeySelective(category);
+        saveCategoryTreeToRedis();//数据修改后重新进行缓存预热
     }
 
     /**
@@ -110,6 +124,48 @@ public class CategoryServiceImpl implements CategoryService {
             throw new RuntimeException("存在下级分类，无法删除");
         }
         categoryMapper.deleteByPrimaryKey(id);
+        saveCategoryTreeToRedis();//数据修改后重新进行缓存预热
+    }
+
+    /**
+     * 构建前端页面菜单展示
+     *
+     * @return
+     */
+    @Override
+    public List<Map> findCategoryTree() {
+
+//        从 缓存中提取分类
+        System.out.println("from cache get data");
+        return (List<Map>) redisTemplate.boundValueOps(CacheKey.CATEGORY_TREE).get();
+
+    }
+
+    @Override
+    public void saveCategoryTreeToRedis() {
+        Example example = new Example(Category.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("isShow", "1");//是否显示
+        example.setOrderByClause("seq");//排序
+        List<Category> categoryList = categoryMapper.selectByExample(example);
+        List<Map> categoryTree = findByParentId(categoryList, 0);
+//        存入redis
+        redisTemplate.boundValueOps(CacheKey.CATEGORY_TREE).set(categoryTree);
+
+    }
+
+    private List<Map> findByParentId(List<Category> categoryList, Integer parentId) {
+        List<Map> mapList = new ArrayList<>();
+        for (Category category : categoryList) {
+            if (category.getParentId().equals(parentId)) {
+                Map map = new HashMap();
+                map.put("name", category.getName());
+                map.put("menus", findByParentId(categoryList, category.getId()));
+                mapList.add(map);
+            }
+        }
+        return mapList;
+
     }
 
     /**

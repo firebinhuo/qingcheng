@@ -8,12 +8,13 @@ import com.fire.entity.PageResult;
 import com.fire.pojo.goods.Brand;
 import com.fire.service.goods.BrandService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = BrandService.class)
 public class BrandServiceImpl implements BrandService {
 
     @Autowired
@@ -103,6 +104,10 @@ public class BrandServiceImpl implements BrandService {
     public void delete(Integer id) {
         brandMapper.deleteByPrimaryKey(id);
     }
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
 
     /**
      * 构建查询条件
