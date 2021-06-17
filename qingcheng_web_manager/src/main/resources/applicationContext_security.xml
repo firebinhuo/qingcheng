@@ -19,7 +19,7 @@
         一般只能用权限来控制，角色一般是固定的，不能修改-->
         <!--        <intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"></intercept-url>-->
         <!--        <intercept-url pattern="/*/find*.do" access="hasAnyAuthority()"/>-->
-        <intercept-url pattern="/login/name.do" access="hasAnyAuthority()"/>
+
         <intercept-url pattern="/brand/*.do" access="hasAuthority('brand')"/>
         <intercept-url pattern="/spu/save.do" access="hasAnyAuthority('goods_add','goods_edit')"/>
 

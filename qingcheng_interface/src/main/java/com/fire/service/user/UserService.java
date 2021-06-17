@@ -33,4 +33,12 @@ public interface UserService {
 
     public void delete(String username);
 
+    /**
+     * 根据手机号，发送短信验证码
+     * @param phone
+     */
+    public void sendSms(String phone);
+
+    public void add(User user,String smsCode);
+
 }

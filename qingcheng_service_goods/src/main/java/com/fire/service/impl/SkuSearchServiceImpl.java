@@ -8,6 +8,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -18,8 +19,12 @@ import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.swing.text.Highlighter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,8 +93,27 @@ public class SkuSearchServiceImpl implements SkuSearchService {
         }
 
         searchSourceBuilder.query(boolQueryBuilder);
-        searchRequest.source(searchSourceBuilder);
+//        分页
+        Integer pageSize = 30;//页大小
+        Integer pageNo = Integer.parseInt(searchMap.get("pageNo"));//页码
+        int fromIndex = (pageNo-1)*pageSize;//开始索引
+        searchSourceBuilder.from(fromIndex);//从第几页开始
+        searchSourceBuilder.size(pageSize);//每页大小
 
+        //排序
+        String sort = searchMap.get("sort");//排序字段
+        String sortOrder = searchMap.get("sortOrder");//排序规则
+
+        if (!"".equals(sort)){
+            searchSourceBuilder.sort(sort, SortOrder.valueOf(sortOrder));
+        }
+
+//        高亮设置
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field("name").preTags("<font style='color:red'>").postTags("</font>");
+        searchSourceBuilder.highlighter(highlightBuilder);
+
+        searchRequest.source(searchSourceBuilder);
 //        聚合查询
         TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders.terms("sku_category").field("categoryName");
         searchSourceBuilder.aggregation(termsAggregationBuilder);
@@ -103,6 +127,12 @@ public class SkuSearchServiceImpl implements SkuSearchService {
             //2.1 商品列表查询
             for (SearchHit hit : hits) {
                 Map<String, Object> skuMap = hit.getSourceAsMap();
+//                高亮处理
+                Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+                HighlightField highlightFieldName = highlightFields.get("name");
+                Text[] fragments = highlightFieldName.fragments();
+                String s = fragments[0].toString();
+                skuMap.put("name",s); //用高亮的内容替换原来的
                 resultList.add(skuMap);
             }
             resultMap.put("rows", resultList);
@@ -144,6 +174,10 @@ public class SkuSearchServiceImpl implements SkuSearchService {
 //            if (searchMap.get("spec")==null){
 //
 //            }
+//            2.5 页码
+            long totalCount = searchHits.getTotalHits();//总记录数
+            long pageCount = (totalCount % pageNo)==0 ?totalCount / pageSize : (totalCount / pageSize + 1);
+            resultMap.put("totalPages",pageCount);
 
 
         } catch (IOException e) {
