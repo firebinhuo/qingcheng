@@ -13,7 +13,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = ParaService.class)
 public class ParaServiceImpl implements ParaService {
 
     @Autowired

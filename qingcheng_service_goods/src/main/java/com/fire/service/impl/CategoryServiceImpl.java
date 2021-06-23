@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = CategoryService.class)
 public class CategoryServiceImpl implements CategoryService {
 
     @Autowired

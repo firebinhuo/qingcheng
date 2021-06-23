@@ -2,6 +2,7 @@ package com.fire.service.goods;
 
 import com.fire.entity.PageResult;
 import com.fire.pojo.goods.Sku;
+import com.fire.pojo.order.OrderItem;
 
 import java.util.*;
 
@@ -57,5 +58,12 @@ public interface SkuService {
      * @param id
      */
     public void deletePriceFromRedis(String id);
+
+    /**
+     * 批量扣减库存
+     * @param orderItemList
+     * @return
+     */
+    public boolean deductionStock(List<OrderItem> orderItemList);
 
 }

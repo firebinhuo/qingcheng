@@ -13,7 +13,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = AlbumService.class)
 public class AlbumServiceImpl implements AlbumService {
 
     @Autowired

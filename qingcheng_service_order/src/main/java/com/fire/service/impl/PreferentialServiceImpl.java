@@ -10,10 +10,11 @@ import com.fire.service.order.PreferentialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = PreferentialService.class)
 public class PreferentialServiceImpl implements PreferentialService {
 
     @Autowired
@@ -103,6 +104,44 @@ public class PreferentialServiceImpl implements PreferentialService {
     public void delete(Integer id) {
         preferentialMapper.deleteByPrimaryKey(id);
     }
+
+    @Override
+    public int findPreMoneyByCategoryId(Integer categoryId, int money) {
+//        指定查询条件在优惠规则计算表中查询
+        /**
+         * 指定的查询条件
+         * 1.分类名称
+         * 2.状态为 1
+         * 3.消费额
+         * 4.开始时间和截止时间
+         * 5.排序（按消费额排序）
+         */
+        Example example = new Example(Preferential.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("state", "1");//状态
+        criteria.andEqualTo("categoryId", categoryId);//分类
+        criteria.andLessThanOrEqualTo("buyMoney", money);//消费额
+        criteria.andGreaterThanOrEqualTo("endTime", new Date());//截止日期大于等于当前日期
+        criteria.andLessThanOrEqualTo("startTime", new Date());//开始日期小于当前日期
+        example.setOrderByClause("buy_money desc");//按购买金额降序查询
+
+        List<Preferential> preferentials = preferentialMapper.selectByExample(example);
+        if (preferentials.size() >= 1) {//有优惠
+            Preferential preferential = preferentials.get(0);
+            if ("1".equals(preferential.getType())){//不翻倍
+                return preferential.getPreMoney();
+            }else{//翻倍
+//                计算倍数   money / buy_money
+                int mulipie = money / preferential.getBuyMoney();
+                return mulipie * preferential.getPreMoney();
+            }
+        } else {//没有优惠
+            return 0;
+        }
+    }
+
+
+
 
     /**
      * 构建查询条件

@@ -35,7 +35,7 @@ import java.util.Map;
  * @author fire
  * @date 2021年06月06日16:56
  */
-@Service
+@Service(interfaceClass = SkuSearchService.class)
 public class SkuSearchServiceImpl implements SkuSearchService {
     @Autowired
     private RestHighLevelClient restHighLevelClient;

@@ -1,6 +1,8 @@
 package com.fire.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.fire.dao.AddressMapper;
+import com.fire.pojo.user.Address;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.AreasMapper;
@@ -10,6 +12,7 @@ import com.fire.service.user.AreasService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -103,6 +106,12 @@ public class AreasServiceImpl implements AreasService {
     public void delete(String areaid) {
         areasMapper.deleteByPrimaryKey(areaid);
     }
+
+
+
+
+
+
 
     /**
      * 构建查询条件

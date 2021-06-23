@@ -16,7 +16,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.List;
 import java.util.Map;
 
-@Service//使用Dubbo注解需要注意的问题
+@Service(interfaceClass = SpecService.class)//使用Dubbo注解需要注意的问题
 public class SpecServiceImpl implements SpecService {
 
     @Autowired

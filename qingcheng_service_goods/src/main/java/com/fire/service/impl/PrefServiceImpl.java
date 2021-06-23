@@ -1,6 +1,7 @@
 package com.fire.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.fire.service.goods.ParaService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.PrefMapper;
@@ -13,7 +14,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = PrefService.class)
 public class PrefServiceImpl implements PrefService {
 
     @Autowired

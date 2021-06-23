@@ -10,6 +10,7 @@ import com.fire.service.user.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -102,6 +103,15 @@ public class AddressServiceImpl implements AddressService {
      */
     public void delete(Integer id) {
         addressMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public List<Address> findByUsername(String username) {
+        Map map = new HashMap();
+        map.put("username",username);
+        Example example = createExample(map);
+
+        return addressMapper.selectByExample(example);
     }
 
     /**

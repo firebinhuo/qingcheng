@@ -1,6 +1,7 @@
 package com.fire.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.fire.pojo.order.OrderItem;
 import com.fire.utils.CacheKey;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -10,13 +11,14 @@ import com.fire.pojo.goods.Sku;
 import com.fire.service.goods.SkuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = SkuService.class)
 public class SkuServiceImpl implements SkuService {
 
     @Autowired
@@ -165,6 +167,38 @@ public class SkuServiceImpl implements SkuService {
     @Override
     public void deletePriceFromRedis(String id) {
         redisTemplate.boundHashOps(CacheKey.SKU_PRICE).delete(id);
+    }
+
+//    @Transactional
+    @Override
+    public boolean deductionStock(List<OrderItem> orderItemList) {
+//        1.检查是否可以扣减库存
+        boolean isDuction = true;  //是否可以扣减
+        for (OrderItem orderItem : orderItemList) {
+            Sku sku = findById(orderItem.getSkuId());
+            if (sku==null){
+                isDuction = false;
+                break;
+            }
+            if(!"1".equals(sku.getStatus())){
+                isDuction = false;
+                break;
+            }
+            if (sku.getNum().intValue()<orderItem.getNum().intValue()){
+                isDuction = false;
+                break;
+            }
+        }
+
+//        2.执行扣减
+        if (isDuction){
+            for (OrderItem orderItem : orderItemList) {
+                skuMapper.deductionStock(orderItem.getSkuId(),orderItem.getNum());//扣减库存
+                skuMapper.addSaleNum(orderItem.getSkuId(),orderItem.getNum());//增加销量
+            }
+        }
+
+        return isDuction;
     }
 
     /**

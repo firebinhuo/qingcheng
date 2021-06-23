@@ -22,7 +22,7 @@ public class CategoryReportServiceImpl implements CategoryReportService {
     }
 
     @Override
-    @Transactional
+//    @Transactional
     public void createData() {
         //查询昨天的类目统计数据
         LocalDate localDate = LocalDate.now().minusDays(1);

@@ -1,5 +1,6 @@
 package com.fire.service.impl;
 
+import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -7,22 +8,24 @@ import com.fire.dao.OrderConfigMapper;
 import com.fire.dao.OrderItemMapper;
 import com.fire.dao.OrderLogMapper;
 import com.fire.pojo.order.*;
+import com.fire.service.goods.SkuService;
+import com.fire.service.order.CartService;
 import com.fire.utils.IdWorker;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fire.dao.OrderMapper;
 import com.fire.entity.PageResult;
 import com.fire.service.order.OrderService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service(interfaceClass = OrderService.class)
 public class OrderServiceImpl implements OrderService {
@@ -105,8 +108,69 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param order 订单
      */
-    public void add(Order order) {
-        orderMapper.insert(order);
+    @Autowired
+    private CartService cartService;
+
+    @Reference
+    private SkuService skuService;
+
+    @Autowired
+    private IdWorker idWorker;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Override
+    public Map<String, Object> add(Order order) {
+//        1.获取选中购物车
+        List<Map<String, Object>> cartList = cartService.findNewOrderList(order.getUsername());
+        List<OrderItem> orderItemList = cartList.stream()
+                .filter(cart -> (boolean) cart.get("checked"))
+                .map(cart -> (OrderItem) cart.get("item"))
+                .collect(Collectors.toList());
+//        2.扣减库存
+        if (!skuService.deductionStock(orderItemList)){
+            throw new RuntimeException("库存不足,库存扣减失败");
+        }
+        try{
+            //        3.保存订单主表
+            order.setId(idWorker.nextId()+"");
+
+            int totalNum = orderItemList.stream().mapToInt(OrderItem::getNum).sum();
+
+            int totalMoney = orderItemList.stream().mapToInt(OrderItem::getMoney).sum();
+            order.setTotalNum(totalNum);//总数量
+            order.setTotalMoney(totalMoney);//总金额
+            int preMoney = cartService.preferenial(order.getUsername());//满减优惠金额
+            order.setPreMoney(preMoney);
+            order.setPayMoney(order.getTotalMoney()-preMoney);
+            order.setCreateTime(new Date());
+            order.setOrderStatus("0");//订单状态
+            order.setPayStatus("0");//支付状态
+            order.setConsignStatus("0");//发货状态
+            orderMapper.insert(order);
+//        4.保存订单明细表
+//        打折比例
+            double prportion = (double) order.getPayMoney() /totalMoney;
+            for (OrderItem orderItem : orderItemList) {
+                orderItem.setName(order.getUsername());
+                orderItem.setId(idWorker.nextId()+"");
+                orderItem.setOrderId(order.getId());
+                orderItem.setPayMoney( (int)(orderItem.getMoney()*prportion));
+                orderItemMapper.insert(orderItem);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+//            发送回滚消息
+            rabbitTemplate.convertAndSend("","queue.skuback",JSON.toJSONString(orderItemList));
+            throw new RuntimeException("创建订单失败");
+        }
+//        5.清除购物车
+        cartService.deleteCheckedCart(order.getUsername());
+        Map map = new HashMap();
+        map.put("ordersn",order.getId());
+        map.put("money",order.getPayMoney());
+        return map;
     }
 
     /**
@@ -137,7 +201,7 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private OrderLogMapper logMapper;
 
-    @Transactional
+//    @Transactional
     @Override
     public void batchSend(List<Order> orders) {
         //判断运单号和物流公司是否为空

@@ -5,6 +5,8 @@ public enum CacheKey {
     SKU_PRICE,//价格
     CATEGORY_TREE,//分类
     SPEC_LIST,//规格列表
-    BRAND;//品牌
+    BRAND,
+    CART_LIST, CATEGORY;//品牌
+
 
 }

@@ -13,7 +13,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = TemplateService.class)
 public class TemplateServiceImpl implements TemplateService {
 
     @Autowired

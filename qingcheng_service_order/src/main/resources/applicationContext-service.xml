@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+    <!--    雪花分布式算法id生成-->
+    <bean id="idWorker" class="com.fire.utils.IdWorker">
+        <constructor-arg index="0" value="1"></constructor-arg>
+        <constructor-arg index="1" value="1"></constructor-arg>
+    </bean>
+
+    <!--加载配置文件-->
+    <!--    <context:property-placeholder location="classpath:rabbitmq.properties"/>-->
+    <!-- 定义rabbitmq connectionFactory  连接工厂 -->
+    <rabbit:connection-factory id="connectionFactory"  host="82.156.197.219"
+                               port="5672"
+                               username="guest"
+                               password="guest"
+    />
+    <!--定义管理交换机、队列-->
+    <rabbit:admin connection-factory="connectionFactory"/>
+    <!--    自动创建消息队列-->
+    <rabbit:queue name="queue.skuback"/>
+    <!--定义rabbitTemplate对象操作可以在代码中方便发送消息-->
+    <rabbit:template id="rabbitTemplate" connection-factory="connectionFactory"/>
+
+
+
+</beans>
